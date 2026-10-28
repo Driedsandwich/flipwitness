@@ -44,15 +44,17 @@ node scripts/mock-flow.mjs
 node serve.mjs
 ```
 
-To preview, run `node serve.mjs`, then open `http://127.0.0.1:4173/`.
+To preview, run `node serve.mjs`, then open `http://127.0.0.1:4173/`. The samples work without a key.
+To call the models live locally, set `NEBIUS_API_KEY`, `PW_LIVE=1` and `PW_GRANTED_CREDITS_USD`
+(your granted credit) in the environment first; spending is recorded in `~/.x129/ledger.jsonl`
+unless `X129_LEDGER_PATH` points elsewhere.
 The root redirects to `/web/index.html`. The server also provides the local POST `/api/pw` endpoint. Stop the server with Ctrl-C. The page requires HTTP serving from
 the project root; opening the HTML as a local file is not the supported workflow.
-No browser was opened during implementation.
 
 Samples: `month-end`, `name-check`, `csv-line`. CLI patch choices: `good`,
-`incomplete`. Test choices: `golden`, `existing`. Test failures and inconclusive
-results are evidence-card data and exit with code 0. Invalid arguments, missing
-files or a patch application failure exit with code 1.
+`incomplete`. Test choices: `golden`, `existing`. The CLI exits with code 0 when
+tests fail or are inconclusive (those are evidence-card results) and with code 1
+for invalid arguments, missing files or a patch that does not apply.
 
 ## Deploy on Vercel
 
