@@ -2,45 +2,45 @@
 
 audience: maintainers
 
-依存追加・ダウンロード・Web APIへの呼出しなしで実装しました。Node実行とCLIの判定を確認済みです。ブラウザでの実行と画面確認は行っていません。
+Implemented without adding dependencies, downloading anything, or calling Web APIs. Node execution and CLI verdicts have been checked. Browser execution and visual checks have not been performed.
 
-## 構成と判断
+## Structure and decisions
 
-- `core/patch.mjs`: ファイル内容のコピーへ統一差分を適用します。元の行番号、出力先の行番号、行数、文脈、改行の有無を照合します。複数ファイル・複数ハンク、作成・削除、CRLFを扱います。不一致はファイル名とハンク番号付きの例外になります。ディスクへは書き込みません。
-- `core/harness.mjs`: `test`と`expect`、4種類の照合を提供します。非同期テストを順に待ちます。照合失敗は`fail`、その他の例外は`error`です。重複名と予約名`[suite]`を拒否します。
-- `core/runner.mjs`: 同じ引数形式で実行先を選びます。`runner.shared.mjs`がパス解決、引数検査、期限、結果収集を共有します。
-- `core/runner.node.mjs`と`runner.node.worker.mjs`: 専用スレッド内に新しい`vm`コンテキストを作ります。呼出元が期限後にスレッドを終了するため、同期無限ループと完了しないPromiseの両方を停止できます。実行済みの結果を保存し、未実行のテストも理由付きの`timeout`にします。
-- `core/runner.browser.mjs`と`runner.browser.imports.mjs`: Blob URLから専用Web Workerを作ります。与えられたモジュールの静的インポートを内部Blob URLへ書き換えます。Worker内の`fetch`、`XMLHttpRequest`、`WebSocket`、`importScripts`などを例外に置き換えます。呼出元が期限後にWorkerを終了し、Blob URLを解放します。
-- `core/classify.mjs`: 元コードでの照合失敗とパッチ後の成功を`witness`と判定します。実行時エラーや期限切れは証拠として数えません。明示的に`AssertionError:`で始まる元コード側の`error`も、互換用に照合失敗として受け入れます。
-- `core/evidence.mjs`: テスト名で前後を結び、状態とメッセージを保持します。欠けた結果は`error`です。パッチ後の照合失敗があれば`patch_suspect`、それ以外で証拠があれば`supported`、証拠がなければ`no_evidence`です。
-- `samples/`: 月末の請求日、空白だけの名前、引用符内のカンマの3例です。各例に元コード、既存テスト、不具合報告、2種類のパッチ、手書きの再現テスト、読み込み用の`sample.json`があります。
-- `cli.mjs`: 証拠カードJSONを出力します。テストの成否にかかわらず通常終了は0です。引数・ファイル・差分の問題など、ツールの処理自体が失敗したときだけ1です。
-- `web/`: サンプル選択、コード・報告・差分の表示、手書きテストの実行、前後の結果表示を実装しました。LLM用ボタンは指定の説明文付きで無効です。`serve.mjs`は任意のローカル表示用で、自動でブラウザを開きません。
+- `core/patch.mjs`: Applies a unified diff to copies of file contents. Checks original line numbers, output line numbers, line counts, context, and the presence or absence of newlines. Handles multiple files and hunks, creation and deletion, and CRLF. Mismatches raise exceptions with the file name and hunk number. Does not write to disk.
+- `core/harness.mjs`: Provides `test`, `expect`, and 4 kinds of assertions. Awaits asynchronous tests in order. Assertion failures are `fail`; other exceptions are `error`. Rejects duplicate names and the reserved name `[suite]`.
+- `core/runner.mjs`: Selects the execution target using the same argument format. `runner.shared.mjs` shares path resolution, argument validation, deadlines, and result collection.
+- `core/runner.node.mjs` and `runner.node.worker.mjs`: Create a new `vm` context in a dedicated thread. The caller terminates the thread after the deadline, so both synchronous infinite loops and Promises that never complete can be stopped. Preserves completed results and also marks tests that have not run as `timeout`, with a reason.
+- `core/runner.browser.mjs` and `runner.browser.imports.mjs`: Create a dedicated Web Worker from a Blob URL. Rewrite static imports in the supplied modules to internal Blob URLs. Replace `fetch`, `XMLHttpRequest`, `WebSocket`, `importScripts`, and similar facilities in the Worker with exceptions. The caller terminates the Worker after the deadline and releases the Blob URLs.
+- `core/classify.mjs`: Classifies an assertion failure in the original code followed by a pass after the patch as a `witness`. Runtime errors and timeouts do not count as evidence. For compatibility, original-code results explicitly starting with `AssertionError:` and marked `error` are also accepted as assertion failures.
+- `core/evidence.mjs`: Pairs before-and-after results by test name and preserves statuses and messages. Missing results are `error`. The verdict is `patch_suspect` if there are assertion failures after the patch; otherwise, it is `supported` if there is evidence, and `no_evidence` if there is none.
+- `samples/`: Contains 3 examples: month-end billing dates, names containing only whitespace, and commas inside quotation marks. Each example has original code, existing tests, a bug report, 2 kinds of patches, handwritten reproduction tests, and a `sample.json` for loading.
+- `cli.mjs`: Outputs evidence-card JSON. Normal completion returns 0 regardless of whether tests pass or fail. Returns 1 only when the tool's own processing fails, such as a problem with arguments, files, or diffs.
+- `web/`: Implements sample selection, display of code, reports, and diffs, execution of handwritten tests, and display of before-and-after results. The LLM button is disabled with the specified explanatory text. `serve.mjs` is optional for local viewing and does not open a browser automatically.
 
-## 隔離の範囲と制限
+## Scope and limitations of isolation
 
-**敵対的コードに対するセキュリティ境界ではありません。** 信頼できる小さなコードとテストに限定する設計です。
+**This is not a security boundary against hostile code.** The design is limited to small, trusted code and tests.
 
-Node側では、対象コンテキストへ`process`、`require`、ファイルシステム、ネットワーク用のオブジェクトを渡しません。外部インポートと動的インポートを拒否し、文字列とWebAssemblyからのコード生成を無効にします。タイマーAPIも渡しません。照合処理自体は対象コンテキスト内で実行します。ホスト側のコントローラーだけが、このプロジェクトの照合用ファイルを読み込みます。スレッドのヒープ・スタック上限は運用上の制限であり、あらゆるメモリ枯渇やランタイム攻撃を防ぐ保証ではありません。
+On the Node side, `process`, `require`, filesystem objects, and networking objects are not passed to the target context. External and dynamic imports are rejected, and code generation from strings and WebAssembly is disabled. Timer APIs are not passed in either. The assertions themselves run inside the target context. Only the host-side controller reads this project's files used for checking. Thread heap and stack limits are operational limits, not a guarantee against all memory exhaustion or runtime attacks.
 
-ブラウザ側の書換え器は完全なJavaScript構文解析器ではありません。循環インポート、補間付きテンプレート文字列、エスケープを含むモジュール指定、`import.meta`を拒否します。引用符やインポートに似た語を含む正規表現リテラルを誤って扱う可能性があります。サンプル形式の単純な静的モジュールを対象とします。ブラウザ機能の完全な封じ込めは保証しません。呼出元で行う信頼済みの照合用ファイルの読込みは、Workerの期限計測外です。
+The browser-side rewriter is not a complete JavaScript parser. It rejects circular imports, template strings with interpolation, module specifiers containing escapes, and `import.meta`. It may mishandle regular expression literals containing quotation marks or words resembling imports. It targets simple static modules in the sample format. Complete containment of browser capabilities is not guaranteed. The caller's loading of trusted files used for checking is outside the Worker's deadline measurement.
 
-期限はテスト1件ごとではなく、起動・モジュール評価を含む実行全体に適用します。構文・リンク・登録の失敗には`[suite]`を使います。照合以外の例外と期限切れは`errors`に集計します。`supported`でも別のテストにエラーがある可能性はあるため、UIや利用側は件数とメッセージも確認する必要があります。
+The deadline applies to the entire run, including startup and module evaluation, rather than to 1 test at a time. Syntax, linking, and registration failures use `[suite]`. Exceptions other than assertion failures, along with timeouts, are counted in `errors`. Even with `supported`, other tests may have errors, so the UI and consumers also need to check the counts and messages.
 
-差分の曖昧一致、リネーム、バイナリ差分、引用符やエスケープを使うGit形式のパス、メタデータだけの差分には対応しません。CSVは正常な単一行を対象にし、複数行レコードや不正形式の完全な検査は対象外です。請求日の例は現代の日付範囲の有効なISO日付を前提にしています。Apache-2.0本文の正確性を保証できないため、指定どおり`LICENSE_TODO.md`を作成しました。
+Fuzzy diff matching, renames, binary diffs, Git-format paths using quotation marks or escapes, and metadata-only diffs are not supported. CSV handling targets valid single lines; multiline records and complete validation of malformed input are out of scope. The billing-date example assumes valid ISO dates in a modern date range. Since the accuracy of the Apache-2.0 text could not be guaranteed, `LICENSE_TODO.md` was created as specified.
 
-## 実測結果
+## Measured results
 
-ローカルの`node --version`の出力は`v22.22.3`でした。ランタイムの一次資料として、同じ実行ファイルの`node --help`には次の記載があります。
+The local output of `node --version` was `v22.22.3`. As primary documentation for the runtime, `node --help` from the same executable contains the following:
 
 ```text
 --experimental-vm-modules   experimental ES Module support in vm
                             module
 ```
 
-出典: 作業環境の`node --help`。Nodeアダプターはこのフラグを専用スレッドへ渡します。外部ドキュメントは取得していません。関連APIの参照先は[README.md](README.md)に掲載しています。
+Source: `node --help` in the working environment. The Node adapter passes this flag to the dedicated thread. No external documentation was retrieved. References for the relevant APIs are listed in [README.md](README.md).
 
-最終の`node --test tests/`は終了コード0でした。以下は出力末尾の転載です。
+The final `node --test tests/` exited with code 0. The end of its output is reproduced below.
 
 ```text
 1..29
@@ -54,11 +54,11 @@ Node側では、対象コンテキストへ`process`、`require`、ファイル�
 # duration_ms 1134.415459
 ```
 
-この実行で、200ミリ秒の期限を設定した無限ループのテスト全体は203.114ミリ秒、未解決Promiseのテスト全体は202.847208ミリ秒でした。モジュール評価中の無限ループは150ミリ秒の期限に対し152.464333ミリ秒でした。数値には実行・終了処理の時間を含みます。`process`、`require('fs')`、`fetch`等への直接アクセスを試すテストはすべて`error`を返しました。ネットワーク通信は行っていません。
+In this run, with a 200 ms deadline, the entire infinite-loop test took 203.114 ms and the entire unresolved-Promise test took 202.847208 ms. With a 150 ms deadline, an infinite loop during module evaluation took 152.464333 ms. These figures include execution and termination processing time. Tests attempting direct access to `process`, `require('fs')`, `fetch`, and similar facilities all returned `error`. No network communication took place.
 
-CLIは下表の各行につき`--tests golden`と`--tests existing`を別プロセスで実行しました。12回すべて終了コード0でした。証拠数とパッチ後失敗数は手書きテストの件数です。
+For each row in the table below, the CLI ran `--tests golden` and `--tests existing` in separate processes. All 12 runs exited with code 0. The evidence counts and post-patch failure counts refer to handwritten tests.
 
-| サンプル | `--patch` | `--tests golden`のverdict | 証拠数 | パッチ後失敗数 | `--tests existing`のverdict |
+| Sample | `--patch` | `--tests golden` verdict | Evidence count | Post-patch failure count | `--tests existing` verdict |
 | --- | --- | --- | ---: | ---: | --- |
 | month-end | good | supported | 3 | 0 | no_evidence |
 | month-end | incomplete | patch_suspect | 2 | 1 | no_evidence |
@@ -67,6 +67,6 @@ CLIは下表の各行につき`--tests golden`と`--tests existing`を別プロ�
 | csv-line | good | supported | 3 | 0 | no_evidence |
 | csv-line | incomplete | patch_suspect | 2 | 1 | no_evidence |
 
-既存テストは月末の例が2件、名前の例とCSVの例が各3件です。両パッチで全件が`passes_both`でした。手書きテストは各例3件です。全12回の`errors`は0でした。
+There are 2 existing tests for the month-end example and 3 each for the name and CSV examples. All were `passes_both` with both patches. Each example has 3 handwritten tests. Across all 12 runs, `errors` was 0.
 
-追加の静的確認として、30個のESモジュールの`node --check`が成功しました。また、3例の元コード・良いパッチ・不完全パッチと手書きテストを合わせた21個のモジュール変種について、ブラウザ用インポート書換えと構文検査が成功しました。これらはブラウザでのWorker実行を実証するものではありません。プレビューサーバーも起動していません。
+As an additional static check, `node --check` passed for 30 ES modules. For the 3 examples, the original code, good patches, incomplete patches, and handwritten tests totaled 21 module variants; browser import rewriting and syntax checks passed for all of them. These checks do not demonstrate Worker execution in a browser. The preview server was not started either.

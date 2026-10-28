@@ -1,8 +1,40 @@
 # PatchWitness
 
-A patch-and-test demo with an optional Nemotron model stage. A **witness** fails on original code with an
-assertion and passes on patched code. There are no dependencies, downloads or build steps. The default sample
-view shows recorded live runs (NVIDIA Nemotron 3 via Nebius Token Factory, 2026-10-24) and makes no LLM calls. Live calls are opt-in. The samples are self-written fictional modules.
+PatchWitness turns a bug report and a patch into evidence. NVIDIA Nemotron writes the
+tests, your browser runs them on the original and the patched code, and only a test that
+fails before and passes after counts as a **witness**. With no witness, the model rewrites
+the tests from the before/after results, up to three times.
+
+- **Live demo:** _added at deployment_
+- **Video (under 3 minutes):** _added at upload_
+- **Track:** Coding and Agentic Engineering · Nebius x NVIDIA Global AI Hackathon
+
+The default sample view shows recorded live runs (NVIDIA Nemotron 3 via Nebius Token
+Factory, 2026-10-24) and makes no model calls. "Run live" and the paste mode call the
+models. The samples are self-written fictional modules. There are no dependencies,
+downloads or build steps.
+
+## How NVIDIA Nemotron and Nebius Token Factory are used
+
+All model calls go to the Nebius Token Factory OpenAI-compatible API
+(`https://api.tokenfactory.nebius.com/v1/`) at runtime, with structured JSON output.
+Generated tests never run on the server.
+
+| Stage | Model | What it does | Calls per session |
+|---|---|---|---|
+| Extract | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` | Expected and actual behaviour, reproduction steps and inputs from the bug report. | 1 |
+| Hypothesise | `nvidia/Nemotron-3-Ultra-550b-a55b` | One to three root-cause hypotheses tied to real files, with edge cases to test. | 1 |
+| Write tests | `nvidia/nemotron-3-super-120b-a12b` | Candidate tests for a small harness; on a rewrite it sees which tests passed on both sides or failed after the patch. | 1 to 4 |
+| Run | none (your browser) | A Web Worker runs each test on the original and the patched code. Network APIs, nested workers and dynamic imports are disabled; a looping run stops after 1.5 s. | 0 |
+| Classify | none (code) | witness / passes both / fails after / inconclusive, and the card: supported, patch suspect or no evidence. | 0 |
+
+Token Factory made the three-size design cheap to build: one endpoint and key, a
+model-ID change between stages, rate-limit headers and per-model prices that feed the
+app's spending ledger. A full session cost $0.005–$0.023.
+
+## Run it locally
+
+Node.js 22, no `npm install`.
 
 ```sh
 node --test tests/
@@ -210,3 +242,7 @@ those values match the sample file. This uses the same renderer as the app and m
 no live model calls. Probe URLs come from the page's own origin. An expandable
 preview shows the last sample rendered. The Node rendering tests use a small
 element test double; they do not verify browser layout or accessibility behavior.
+
+## License
+
+[Apache License 2.0](LICENSE).
