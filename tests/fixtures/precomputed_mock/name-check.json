@@ -1,0 +1,269 @@
+{
+  "source": "mock",
+  "cost": 0,
+  "note": "Scripted fixtures, not real model output. Costs inside patches are simulated USD.",
+  "patches": {
+    "good": {
+      "session": "f5745c07-1537-4b9e-baeb-82401344c3a4",
+      "cost": 0.0008359999999999999,
+      "extraction": {
+        "expected": "Reject names containing only whitespace and all non-string values.",
+        "actual": "Two spaces are accepted as a valid name.",
+        "repro_steps": [
+          "Enter two spaces.",
+          "Validate the name."
+        ],
+        "inputs": [
+          "  ",
+          "\\t\\n"
+        ],
+        "suspected_area": "src/name.mjs"
+      },
+      "hypotheses": [
+        {
+          "id": "H1",
+          "statement": "Length is checked without trimming whitespace.",
+          "file": "src/name.mjs",
+          "line_hint": null,
+          "why_patch_addresses_it": "Trimming before the length check rejects whitespace-only strings.",
+          "edge_cases_to_test": [
+            "  ",
+            "\\t\\n"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "stage": "extract",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "cost": 0.000036,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "hypothesize",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "cost": 0.0005,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.0003,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        }
+      ],
+      "rounds": [
+        {
+          "round": 0,
+          "card": {
+            "verdict": "supported",
+            "summary": {
+              "witnesses": 2,
+              "passesBoth": 1,
+              "failsAfter": 0,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "spaces alone are rejected",
+                "before": {
+                  "name": "spaces alone are rejected",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "spaces alone are rejected",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "tabs and newlines alone are rejected",
+                "before": {
+                  "name": "tabs and newlines alone are rejected",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "tabs and newlines alone are rejected",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "surrounding whitespace preserves a name",
+                "before": {
+                  "name": "surrounding whitespace preserves a name",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "surrounding whitespace preserves a name",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              }
+            ]
+          },
+          "tests_source": "import { isValidName } from '@entry';\nimport { test, expect } from '@patchwitness/harness';\n\ntest('spaces alone are rejected', () => { expect(isValidName('  ')).toBe(false); });\ntest('tabs and newlines alone are rejected', () => { expect(isValidName('\\t\\n')).toBe(false); });\ntest('surrounding whitespace preserves a name', () => { expect(isValidName('  Mira\\t')).toBe(true); });\n",
+          "rationale": [
+            "Assert the behavior specified by the report at its edge cases."
+          ],
+          "cost": 0.0008359999999999999
+        }
+      ]
+    },
+    "incomplete": {
+      "session": "811934f8-72de-45b8-8f42-0036f29079bd",
+      "cost": 0.0008359999999999999,
+      "extraction": {
+        "expected": "Reject names containing only whitespace and all non-string values.",
+        "actual": "Two spaces are accepted as a valid name.",
+        "repro_steps": [
+          "Enter two spaces.",
+          "Validate the name."
+        ],
+        "inputs": [
+          "  ",
+          "\\t\\n"
+        ],
+        "suspected_area": "src/name.mjs"
+      },
+      "hypotheses": [
+        {
+          "id": "H1",
+          "statement": "Length is checked without trimming whitespace.",
+          "file": "src/name.mjs",
+          "line_hint": null,
+          "why_patch_addresses_it": "Trimming before the length check rejects whitespace-only strings.",
+          "edge_cases_to_test": [
+            "  ",
+            "\\t\\n"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "stage": "extract",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "cost": 0.000036,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "hypothesize",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "cost": 0.0005,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.0003,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        }
+      ],
+      "rounds": [
+        {
+          "round": 0,
+          "card": {
+            "verdict": "patch_suspect",
+            "summary": {
+              "witnesses": 1,
+              "passesBoth": 1,
+              "failsAfter": 1,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "spaces alone are rejected",
+                "before": {
+                  "name": "spaces alone are rejected",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "spaces alone are rejected",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "tabs and newlines alone are rejected",
+                "before": {
+                  "name": "tabs and newlines alone are rejected",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "tabs and newlines alone are rejected",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "surrounding whitespace preserves a name",
+                "before": {
+                  "name": "surrounding whitespace preserves a name",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "surrounding whitespace preserves a name",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              }
+            ]
+          },
+          "tests_source": "import { isValidName } from '@entry';\nimport { test, expect } from '@patchwitness/harness';\n\ntest('spaces alone are rejected', () => { expect(isValidName('  ')).toBe(false); });\ntest('tabs and newlines alone are rejected', () => { expect(isValidName('\\t\\n')).toBe(false); });\ntest('surrounding whitespace preserves a name', () => { expect(isValidName('  Mira\\t')).toBe(true); });\n",
+          "rationale": [
+            "Assert the behavior specified by the report at its edge cases."
+          ],
+          "cost": 0.0008359999999999999
+        }
+      ]
+    }
+  }
+}

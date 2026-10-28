@@ -1,0 +1,387 @@
+{
+  "source": "mock",
+  "cost": 0,
+  "note": "Scripted fixtures, not real model output. Costs inside patches are simulated USD.",
+  "patches": {
+    "good": {
+      "session": "d9d20b4d-4536-4935-8846-4aec52ce2a30",
+      "cost": 0.0008359999999999999,
+      "extraction": {
+        "expected": "Clamp the next monthly date to the last valid UTC calendar day.",
+        "actual": "January 31 produces March 3 instead of February 28.",
+        "repro_steps": [
+          "Start a period on January 31, 2025.",
+          "Observe the returned period end."
+        ],
+        "inputs": [
+          "2025-01-31",
+          "2024-01-31"
+        ],
+        "suspected_area": "src/billing.mjs"
+      },
+      "hypotheses": [
+        {
+          "id": "H1",
+          "statement": "Date.UTC normalizes an overflowing day into the following month.",
+          "file": "src/billing.mjs",
+          "line_hint": null,
+          "why_patch_addresses_it": "Clamping the day before date construction avoids overflow.",
+          "edge_cases_to_test": [
+            "2025-01-31",
+            "2024-01-31"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "stage": "extract",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "cost": 0.000036,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "hypothesize",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "cost": 0.0005,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.00015,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.00015,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        }
+      ],
+      "rounds": [
+        {
+          "round": 0,
+          "card": {
+            "verdict": "no_evidence",
+            "summary": {
+              "witnesses": 0,
+              "passesBoth": 2,
+              "failsAfter": 0,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "ordinary monthly period",
+                "before": {
+                  "name": "ordinary monthly period",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "ordinary monthly period",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "year rollover",
+                "before": {
+                  "name": "year rollover",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "year rollover",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              }
+            ]
+          },
+          "tests_source": "import { periodEnd } from '@entry';\nimport { test, expect } from '@patchwitness/harness';\n\ntest('ordinary monthly period', () => {\n  expect(periodEnd('2025-01-15')).toBe('2025-02-15');\n});\ntest('year rollover', () => {\n  expect(periodEnd('2025-12-10')).toBe('2026-01-10');\n});\n",
+          "rationale": [
+            "Check ordinary dates; deliberately no regression witness in this scripted first round."
+          ],
+          "cost": 0.000686
+        },
+        {
+          "round": 1,
+          "card": {
+            "verdict": "supported",
+            "summary": {
+              "witnesses": 3,
+              "passesBoth": 0,
+              "failsAfter": 0,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "January 31 clamps to February 28",
+                "before": {
+                  "name": "January 31 clamps to February 28",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-03-03\" to be \"2025-02-28\""
+                },
+                "after": {
+                  "name": "January 31 clamps to February 28",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "leap-year February keeps February 29",
+                "before": {
+                  "name": "leap-year February keeps February 29",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2024-03-02\" to be \"2024-02-29\""
+                },
+                "after": {
+                  "name": "leap-year February keeps February 29",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "March 31 clamps to April 30",
+                "before": {
+                  "name": "March 31 clamps to April 30",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-05-01\" to be \"2025-04-30\""
+                },
+                "after": {
+                  "name": "March 31 clamps to April 30",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              }
+            ]
+          },
+          "tests_source": "import { periodEnd } from '@entry';\nimport { test, expect } from '@patchwitness/harness';\n\ntest('January 31 clamps to February 28', () => {\n  expect(periodEnd('2025-01-31')).toBe('2025-02-28');\n});\ntest('leap-year February keeps February 29', () => {\n  expect(periodEnd('2024-01-31')).toBe('2024-02-29');\n});\ntest('March 31 clamps to April 30', () => {\n  expect(periodEnd('2025-03-31')).toBe('2025-04-30');\n});\n",
+          "rationale": [
+            "Assert the behavior specified by the report at its edge cases."
+          ],
+          "cost": 0.0008359999999999999
+        }
+      ]
+    },
+    "incomplete": {
+      "session": "b5782970-5334-4c2b-a823-ef0d6cc12b19",
+      "cost": 0.0008359999999999999,
+      "extraction": {
+        "expected": "Clamp the next monthly date to the last valid UTC calendar day.",
+        "actual": "January 31 produces March 3 instead of February 28.",
+        "repro_steps": [
+          "Start a period on January 31, 2025.",
+          "Observe the returned period end."
+        ],
+        "inputs": [
+          "2025-01-31",
+          "2024-01-31"
+        ],
+        "suspected_area": "src/billing.mjs"
+      },
+      "hypotheses": [
+        {
+          "id": "H1",
+          "statement": "Date.UTC normalizes an overflowing day into the following month.",
+          "file": "src/billing.mjs",
+          "line_hint": null,
+          "why_patch_addresses_it": "Clamping the day before date construction avoids overflow.",
+          "edge_cases_to_test": [
+            "2025-01-31",
+            "2024-01-31"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "stage": "extract",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "cost": 0.000036,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "hypothesize",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "cost": 0.0005,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.00015,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.00015,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        }
+      ],
+      "rounds": [
+        {
+          "round": 0,
+          "card": {
+            "verdict": "no_evidence",
+            "summary": {
+              "witnesses": 0,
+              "passesBoth": 2,
+              "failsAfter": 0,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "ordinary monthly period",
+                "before": {
+                  "name": "ordinary monthly period",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "ordinary monthly period",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "year rollover",
+                "before": {
+                  "name": "year rollover",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "year rollover",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              }
+            ]
+          },
+          "tests_source": "import { periodEnd } from '@entry';\nimport { test, expect } from '@patchwitness/harness';\n\ntest('ordinary monthly period', () => {\n  expect(periodEnd('2025-01-15')).toBe('2025-02-15');\n});\ntest('year rollover', () => {\n  expect(periodEnd('2025-12-10')).toBe('2026-01-10');\n});\n",
+          "rationale": [
+            "Check ordinary dates; deliberately no regression witness in this scripted first round."
+          ],
+          "cost": 0.000686
+        },
+        {
+          "round": 1,
+          "card": {
+            "verdict": "patch_suspect",
+            "summary": {
+              "witnesses": 2,
+              "passesBoth": 0,
+              "failsAfter": 1,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "January 31 clamps to February 28",
+                "before": {
+                  "name": "January 31 clamps to February 28",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-03-03\" to be \"2025-02-28\""
+                },
+                "after": {
+                  "name": "January 31 clamps to February 28",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "leap-year February keeps February 29",
+                "before": {
+                  "name": "leap-year February keeps February 29",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2024-03-02\" to be \"2024-02-29\""
+                },
+                "after": {
+                  "name": "leap-year February keeps February 29",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2024-02-28\" to be \"2024-02-29\""
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "March 31 clamps to April 30",
+                "before": {
+                  "name": "March 31 clamps to April 30",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-05-01\" to be \"2025-04-30\""
+                },
+                "after": {
+                  "name": "March 31 clamps to April 30",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              }
+            ]
+          },
+          "tests_source": "import { periodEnd } from '@entry';\nimport { test, expect } from '@patchwitness/harness';\n\ntest('January 31 clamps to February 28', () => {\n  expect(periodEnd('2025-01-31')).toBe('2025-02-28');\n});\ntest('leap-year February keeps February 29', () => {\n  expect(periodEnd('2024-01-31')).toBe('2024-02-29');\n});\ntest('March 31 clamps to April 30', () => {\n  expect(periodEnd('2025-03-31')).toBe('2025-04-30');\n});\n",
+          "rationale": [
+            "Assert the behavior specified by the report at its edge cases."
+          ],
+          "cost": 0.0008359999999999999
+        }
+      ]
+    }
+  }
+}

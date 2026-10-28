@@ -1,0 +1,776 @@
+{
+  "source": "live",
+  "cost": 0,
+  "recorded_at": "2026-10-24T03:28:02.623Z",
+  "recorded_cost_usd": 0.02264596,
+  "note": "Recorded live run (NVIDIA Nemotron via Nebius Token Factory). Viewing costs $0; the saved before/after results are shown and nothing re-runs.",
+  "patches": {
+    "good": {
+      "session": "7efcaf1f-dcbe-4d3a-84ec-a021ee34cb1f",
+      "cost": 0.00552626,
+      "extraction": {
+        "expected": "A name must contain at least one non-whitespace character; spaces, tabs, and newlines by themselves should be rejected; non-string input must be rejected.",
+        "actual": "Entering two spaces in the name field and saving succeeded, which should have been rejected.",
+        "repro_steps": [
+          "Enter two spaces in the name field",
+          "Save the entry"
+        ],
+        "inputs": [
+          "two spaces"
+        ],
+        "suspected_area": "name validation logic"
+      },
+      "hypotheses": [
+        {
+          "id": "H1",
+          "statement": "The original isValidName function only checked that the input is a string with length > 0, allowing strings consisting solely of whitespace characters (spaces, tabs, newlines) to pass validation. The requirement is that a name must contain at least one non-whitespace character.",
+          "file": "src/name.mjs",
+          "line_hint": 2,
+          "why_patch_addresses_it": "The patch adds .trim() before checking length, which removes leading and trailing whitespace. If the string becomes empty after trimming (i.e., it contained only whitespace), the length check fails, correctly rejecting such inputs.",
+          "edge_cases_to_test": [
+            "two spaces",
+            "tab character",
+            "newline character",
+            "mixed whitespace (space and tab)",
+            "empty string",
+            "string with leading/trailing whitespace but non-whitespace inside",
+            "non-string input (number, null, undefined, object)"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "stage": "extract",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "cost": 0.00014316,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "799226"
+          }
+        },
+        {
+          "stage": "hypothesize",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "cost": 0.003635,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "299",
+            "x-ratelimit-remaining-tokens": "199050"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.0017480999999999998,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "299",
+            "x-ratelimit-remaining-tokens": "198702"
+          }
+        }
+      ],
+      "rounds": [
+        {
+          "round": 0,
+          "card": {
+            "verdict": "supported",
+            "summary": {
+              "witnesses": 4,
+              "passesBoth": 6,
+              "failsAfter": 0,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "rejects two spaces",
+                "before": {
+                  "name": "rejects two spaces",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "rejects two spaces",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "rejects tab character",
+                "before": {
+                  "name": "rejects tab character",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "rejects tab character",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "rejects newline character",
+                "before": {
+                  "name": "rejects newline character",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "rejects newline character",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "rejects mixed whitespace space-tab",
+                "before": {
+                  "name": "rejects mixed whitespace space-tab",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "rejects mixed whitespace space-tab",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "rejects empty string",
+                "before": {
+                  "name": "rejects empty string",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "rejects empty string",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "accepts string with surrounding whitespace but inner non-whitespace",
+                "before": {
+                  "name": "accepts string with surrounding whitespace but inner non-whitespace",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "accepts string with surrounding whitespace but inner non-whitespace",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "rejects non-string number",
+                "before": {
+                  "name": "rejects non-string number",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "rejects non-string number",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "rejects non-string null",
+                "before": {
+                  "name": "rejects non-string null",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "rejects non-string null",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "rejects non-string undefined",
+                "before": {
+                  "name": "rejects non-string undefined",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "rejects non-string undefined",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "rejects non-string object",
+                "before": {
+                  "name": "rejects non-string object",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "rejects non-string object",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              }
+            ]
+          },
+          "tests_source": "import { isValidName } from '@entry' ; import { test, expect } from '@patchwitness/harness' ; test('rejects two spaces', () => { const input = '  ' ; expect(isValidName(input)).toBe(false) ; }) ; test('rejects tab character', () => { const tab = String.fromCharCode(9) ; expect(isValidName(tab)).toBe(false) ; }) ; test('rejects newline character', () => { const nl = String.fromCharCode(10) ; expect(isValidName(nl)).toBe(false) ; }) ; test('rejects mixed whitespace space-tab', () => { const mixed = ' ' + String.fromCharCode(9) ; expect(isValidName(mixed)).toBe(false) ; }) ; test('rejects empty string', () => { expect(isValidName('')).toBe(false) ; }) ; test('accepts string with surrounding whitespace but inner non-whitespace', () => { expect(isValidName('  hello  ')).toBe(true) ; expect(isValidName(String.fromCharCode(9) + 'world' + String.fromCharCode(10))).toBe(true) ; }) ; test('rejects non-string number', () => { expect(isValidName(0)).toBe(false) ; expect(isValidName(42)).toBe(false) ; }) ; test('rejects non-string null', () => { expect(isValidName(null)).toBe(false) ; }) ; test('rejects non-string undefined', () => { expect(isValidName(undefined)).toBe(false) ; }) ; test('rejects non-string object', () => { expect(isValidName({})).toBe(false) ; expect(isValidName([])).toBe(false) ; }) ;",
+          "rationale": [
+            "Tests cover whitespace-only strings: two spaces, tab, newline, mixed space-tab.",
+            "Tests ensure empty string is rejected.",
+            "Tests confirm strings with inner non-whitespace pass despite surrounding whitespace.",
+            "Tests verify non‑string inputs (number, null, undefined, object, array) are rejected."
+          ],
+          "cost": 0.00552626
+        }
+      ]
+    },
+    "incomplete": {
+      "session": "dae6de89-9990-4e1c-8327-2280c6a5bdda",
+      "cost": 0.0171197,
+      "extraction": {
+        "expected": "A name must contain at least one non-whitespace character; whitespace-only strings (spaces, tabs, newlines) must be rejected; non-string inputs must be rejected.",
+        "actual": "Entering two spaces in the name field and saving succeeded, accepting a whitespace-only name.",
+        "repro_steps": [
+          "Enter exactly two space characters in the name input field.",
+          "Click save or submit.",
+          "Observe that the operation succeeds instead of being rejected."
+        ],
+        "inputs": [
+          "two spaces",
+          "non-string input"
+        ],
+        "suspected_area": "name field validation logic"
+      },
+      "hypotheses": [
+        {
+          "id": "whitespace-only-pass",
+          "statement": "The validation only checks that the input is a string with length > 0, so any whitespace-only string (spaces, tabs, newlines) passes because its length is non-zero.",
+          "file": "src/name.mjs",
+          "line_hint": 2,
+          "why_patch_addresses_it": "The patch replaces the length check with a check that removes all space characters (' ') and then verifies the remaining length > 0, which rejects strings consisting solely of spaces.",
+          "edge_cases_to_test": [
+            "two spaces",
+            "tab characters",
+            "newline characters",
+            "mixed whitespace (space + tab)",
+            "empty string",
+            "non-string input"
+          ]
+        },
+        {
+          "id": "patch-incomplete-whitespace",
+          "statement": "The patch only removes the space character (U+0020) via split(' ').join(''), leaving other whitespace characters (tab, newline, carriage return, form feed, vertical tab) untouched, so strings composed solely of those characters will still pass validation.",
+          "file": "src/name.mjs",
+          "line_hint": 2,
+          "why_patch_addresses_it": "The patch attempts to reject whitespace-only names by stripping spaces, but it does not account for the full set of Unicode whitespace characters, so the fix is incomplete.",
+          "edge_cases_to_test": [
+            "tab-only string",
+            "newline-only string",
+            "carriage return only",
+            "form feed only",
+            "vertical tab only",
+            "space + tab combination"
+          ]
+        },
+        {
+          "id": "patch-non-string-handling",
+          "statement": "The original code already rejects non-string inputs via typeof name === 'string'; the patch preserves this check, so non-string inputs remain correctly rejected. However, the patch does not improve handling of non-string edge cases (e.g., null, undefined, objects) beyond the existing guard.",
+          "file": "src/name.mjs",
+          "line_hint": 2,
+          "why_patch_addresses_it": "The patch keeps the typeof guard unchanged, so non-string rejection continues to work as before. The root cause of the reported bug (whitespace-only strings) is unrelated to non-string handling, but the patch does not regress it.",
+          "edge_cases_to_test": [
+            "null",
+            "undefined",
+            "number",
+            "object",
+            "array",
+            "boolean"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "stage": "extract",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "cost": 0.0001806,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "799226"
+          }
+        },
+        {
+          "stage": "hypothesize",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "cost": 0.005651,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "299",
+            "x-ratelimit-remaining-tokens": "199013"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.0092454,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "299",
+            "x-ratelimit-remaining-tokens": "198343"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.0020427,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "299",
+            "x-ratelimit-remaining-tokens": "197905"
+          }
+        }
+      ],
+      "rounds": [
+        {
+          "round": 0,
+          "card": {
+            "verdict": "no_evidence",
+            "summary": {
+              "witnesses": 0,
+              "passesBoth": 0,
+              "failsAfter": 0,
+              "errors": 1
+            },
+            "tests": [
+              {
+                "name": "[suite]",
+                "before": {
+                  "name": "[suite]",
+                  "status": "error",
+                  "message": "SyntaxError: missing ) after argument list"
+                },
+                "after": {
+                  "name": "[suite]",
+                  "status": "error",
+                  "message": "SyntaxError: missing ) after argument list"
+                },
+                "classification": "errors"
+              }
+            ]
+          },
+          "tests_source": "import { isValidName } from '@entry';import { test, expect } from '@patchwitness/harness';const sp = String.fromCharCode(32);const tab = String.fromCharCode(9);const lf = String.fromCharCode(10);const cr = String.fromCharCode(13);const ff = String.fromCharCode(12);const vt = String.fromCharCode(11);test('empty string returns false', () => {expect(isValidName('')).toBe(false);});test('two spaces returns false', () => {expect(isValidName(sp + sp)).toBe(false);});test('tab only returns false', () => {expect(isValidName(tab)).toBe(false);});test('newline only returns false', () => {expect(isValidName(lf)).toBe(false);});test('carriage return only returns false', () => {expect(isValidName(cr)).toBe(false);});test('form feed only returns false', () => {expect(isValidName(ff)).toBe(false);});test('vertical tab only returns false', () => {expect(isValidName(vt)).toBe(false);});test('space + tab returns false', () => {expect(isValidName(sp + tab)).toBe(false);});test('null returns false', () => {expect(isValidName(null)).toBe(false);});test('undefined returns false', () => {expect(isValidName(undefined)).toBe(false);});test('number returns false', () => {expect(isValidName(0)).toBe(false);});test('object returns false', () => {expect(isValidName({})).toBe(false);});test('array returns false', () => {expect(isValidName([])).toBe(false);});test('boolean true returns false', () => {expect(isValidName(true)).toBe(false);});test('boolean false returns false', () => {expect(isValidName(false)).toBe(false);});test('valid name returns true', () => {expect(isValidName('Alice')).toBe(true);});test('name with internal space returns true', () => {expect(isValidName('Bob Smith')).toBe(true);}",
+          "rationale": [
+            "Ensure whitespace-only strings (spaces, tabs, newlines, etc.) are rejected.",
+            "Ensure non-string inputs are rejected.",
+            "Ensure valid names with at least one non-whitespace character are accepted."
+          ],
+          "cost": 0.015077
+        },
+        {
+          "round": 1,
+          "card": {
+            "verdict": "patch_suspect",
+            "summary": {
+              "witnesses": 1,
+              "passesBoth": 17,
+              "failsAfter": 8,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "empty string returns false",
+                "before": {
+                  "name": "empty string returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "empty string returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "two spaces returns false",
+                "before": {
+                  "name": "two spaces returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "two spaces returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "tab only returns false",
+                "before": {
+                  "name": "tab only returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "tab only returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "newline only returns false",
+                "before": {
+                  "name": "newline only returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "newline only returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "carriage return only returns false",
+                "before": {
+                  "name": "carriage return only returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "carriage return only returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "form feed only returns false",
+                "before": {
+                  "name": "form feed only returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "form feed only returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "vertical tab only returns false",
+                "before": {
+                  "name": "vertical tab only returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "vertical tab only returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "space + tab returns false",
+                "before": {
+                  "name": "space + tab returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "space + tab returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "tab + newline returns false",
+                "before": {
+                  "name": "tab + newline returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "tab + newline returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "space + tab + newline returns false",
+                "before": {
+                  "name": "space + tab + newline returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "after": {
+                  "name": "space + tab + newline returns false",
+                  "status": "fail",
+                  "message": "AssertionError: Expected true to be false"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "null returns false",
+                "before": {
+                  "name": "null returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "null returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "undefined returns false",
+                "before": {
+                  "name": "undefined returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "undefined returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "number zero returns false",
+                "before": {
+                  "name": "number zero returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "number zero returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "number positive returns false",
+                "before": {
+                  "name": "number positive returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "number positive returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "object returns false",
+                "before": {
+                  "name": "object returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "object returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "array returns false",
+                "before": {
+                  "name": "array returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "array returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "boolean true returns false",
+                "before": {
+                  "name": "boolean true returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "boolean true returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "boolean false returns false",
+                "before": {
+                  "name": "boolean false returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "boolean false returns false",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "valid name returns true",
+                "before": {
+                  "name": "valid name returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "valid name returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "name with leading space returns true",
+                "before": {
+                  "name": "name with leading space returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "name with leading space returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "name with trailing space returns true",
+                "before": {
+                  "name": "name with trailing space returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "name with trailing space returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "name with surrounding spaces returns true",
+                "before": {
+                  "name": "name with surrounding spaces returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "name with surrounding spaces returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "name with internal space returns true",
+                "before": {
+                  "name": "name with internal space returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "name with internal space returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "name with internal tab returns true",
+                "before": {
+                  "name": "name with internal tab returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "name with internal tab returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "name with internal newline returns true",
+                "before": {
+                  "name": "name with internal newline returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "name with internal newline returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "name with mixed whitespace and letters returns true",
+                "before": {
+                  "name": "name with mixed whitespace and letters returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "name with mixed whitespace and letters returns true",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              }
+            ]
+          },
+          "tests_source": "import { isValidName } from '@entry' ; import { test, expect } from '@patchwitness/harness' ; const sp = String.fromCharCode(32) ; const tab = String.fromCharCode(9) ; const lf = String.fromCharCode(10) ; const cr = String.fromCharCode(13) ; const ff = String.fromCharCode(12) ; const vt = String.fromCharCode(11) ; test('empty string returns false', () => { expect(isValidName('')).toBe(false) }) ; test('two spaces returns false', () => { expect(isValidName(sp + sp)).toBe(false) }) ; test('tab only returns false', () => { expect(isValidName(tab)).toBe(false) }) ; test('newline only returns false', () => { expect(isValidName(lf)).toBe(false) }) ; test('carriage return only returns false', () => { expect(isValidName(cr)).toBe(false) }) ; test('form feed only returns false', () => { expect(isValidName(ff)).toBe(false) }) ; test('vertical tab only returns false', () => { expect(isValidName(vt)).toBe(false) }) ; test('space + tab returns false', () => { expect(isValidName(sp + tab)).toBe(false) }) ; test('tab + newline returns false', () => { expect(isValidName(tab + lf)).toBe(false) }) ; test('space + tab + newline returns false', () => { expect(isValidName(sp + tab + lf)).toBe(false) }) ; test('null returns false', () => { expect(isValidName(null)).toBe(false) }) ; test('undefined returns false', () => { expect(isValidName(undefined)).toBe(false) }) ; test('number zero returns false', () => { expect(isValidName(0)).toBe(false) }) ; test('number positive returns false', () => { expect(isValidName(42)).toBe(false) }) ; test('object returns false', () => { expect(isValidName({})).toBe(false) }) ; test('array returns false', () => { expect(isValidName([])).toBe(false) }) ; test('boolean true returns false', () => { expect(isValidName(true)).toBe(false) }) ; test('boolean false returns false', () => { expect(isValidName(false)).toBe(false) }) ; test('valid name returns true', () => { expect(isValidName('Alice')).toBe(true) }) ; test('name with leading space returns true', () => { expect(isValidName(sp + 'Alice')).toBe(true) }) ; test('name with trailing space returns true', () => { expect(isValidName('Alice' + sp)).toBe(true) }) ; test('name with surrounding spaces returns true', () => { expect(isValidName(sp + 'Alice' + sp)).toBe(true) }) ; test('name with internal space returns true', () => { expect(isValidName('Bob Smith')).toBe(true) }) ; test('name with internal tab returns true', () => { expect(isValidName('Bob' + tab + 'Smith')).toBe(true) }) ; test('name with internal newline returns true', () => { expect(isValidName('Bob' + lf + 'Smith')).toBe(true) }) ; test('name with mixed whitespace and letters returns true', () => { expect(isValidName(sp + 'Jo' + tab + 'hn' + lf)).toBe(true) }) ",
+          "rationale": [
+            "Tests cover empty string, various whitespace-only strings (spaces, tabs, newlines, carriage return, form feed, vertical tab, and combinations) to ensure they are rejected.",
+            "Tests verify that strings containing at least one non-whitespace character pass, including leading/trailing/internal whitespace.",
+            "Tests confirm non-string inputs (null, undefined, numbers, objects, arrays, booleans) are rejected.",
+            "These assertions align with the specification that a valid name must contain at least one non-whitespace character."
+          ],
+          "cost": 0.0171197
+        }
+      ]
+    }
+  }
+}

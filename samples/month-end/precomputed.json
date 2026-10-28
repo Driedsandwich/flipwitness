@@ -1,0 +1,538 @@
+{
+  "source": "live",
+  "cost": 0,
+  "recorded_at": "2026-10-24T03:26:30.537Z",
+  "recorded_cost_usd": 0.029345539999999996,
+  "note": "Recorded live run (NVIDIA Nemotron via Nebius Token Factory). Viewing costs $0; the saved before/after results are shown and nothing re-runs.",
+  "patches": {
+    "good": {
+      "session": "d2d42bd4-715b-4980-9e95-e63c9704d622",
+      "cost": 0.013714619999999999,
+      "extraction": {
+        "expected": "The end date should be the same day next month if it exists; otherwise the last day of that month. For a start date of January 31, 2025, the expected end date is February 28, 2025 (or February 29 in a leap year).",
+        "actual": "The system displays March 3 as the end date.",
+        "repro_steps": [
+          "Start a monthly billing period on January 31, 2025.",
+          "Check the calculated end date; it shows March 3 instead of the expected February 28."
+        ],
+        "inputs": [
+          "Start date: 2025-01-31 (January 31, 2025)"
+        ],
+        "suspected_area": "billing end date calculation logic"
+      },
+      "hypotheses": [
+        {
+          "id": "missing-day-clamp",
+          "statement": "The periodEnd function does not clamp the day-of-month to the target month's length, causing Date.UTC to roll over into the following month when the start day exceeds the target month's days (e.g., Jan 31 -> Feb 31 becomes Mar 3).",
+          "file": "src/billing.mjs",
+          "line_hint": 8,
+          "why_patch_addresses_it": "The patch adds Math.min(date.getUTCDate(), daysInMonth(year, month)) to clamp the day to the target month's last day, preventing overflow.",
+          "edge_cases_to_test": [
+            "2025-01-31 (non-leap year)",
+            "2024-01-31 (leap year)",
+            "2025-08-31 (31 to 30)",
+            "2025-12-31 (year rollover)",
+            "2025-02-28 (end of February non-leap)"
+          ]
+        },
+        {
+          "id": "comment-implementation-mismatch",
+          "statement": "The function's JSDoc comment states 'clamped to that month's last day' but the original code lacked any clamping logic, creating a false sense of correctness.",
+          "file": "src/billing.mjs",
+          "line_hint": 3,
+          "why_patch_addresses_it": "The patch implements the clamping described in the comment, aligning code with documentation.",
+          "edge_cases_to_test": [
+            "2025-01-31",
+            "2025-03-31 (April has 30 days)"
+          ]
+        },
+        {
+          "id": "unused-utility-function",
+          "statement": "The daysInMonth function from calendar.mjs was imported but not used in the original periodEnd, indicating an incomplete implementation of the clamping logic.",
+          "file": "src/billing.mjs",
+          "line_hint": 1,
+          "why_patch_addresses_it": "The patch uses the imported daysInMonth to compute the target month's length for clamping.",
+          "edge_cases_to_test": [
+            "2025-01-31",
+            "2025-02-28 (leap year not needed)"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "stage": "extract",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "cost": 0.00028812,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "799225"
+          }
+        },
+        {
+          "stage": "hypothesize",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "cost": 0.011361,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "299",
+            "x-ratelimit-remaining-tokens": "198721"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.0020655,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "299",
+            "x-ratelimit-remaining-tokens": "198203"
+          }
+        }
+      ],
+      "rounds": [
+        {
+          "round": 0,
+          "card": {
+            "verdict": "supported",
+            "summary": {
+              "witnesses": 4,
+              "passesBoth": 3,
+              "failsAfter": 0,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "periodEnd clamps Jan 31 2025 to Feb 28",
+                "before": {
+                  "name": "periodEnd clamps Jan 31 2025 to Feb 28",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-03-03\" to be \"2025-02-28\""
+                },
+                "after": {
+                  "name": "periodEnd clamps Jan 31 2025 to Feb 28",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "periodEnd clamps Jan 31 2024 leap year to Feb 29",
+                "before": {
+                  "name": "periodEnd clamps Jan 31 2024 leap year to Feb 29",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2024-03-02\" to be \"2024-02-29\""
+                },
+                "after": {
+                  "name": "periodEnd clamps Jan 31 2024 leap year to Feb 29",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "periodEnd clamps Aug 31 2025 to Sep 30",
+                "before": {
+                  "name": "periodEnd clamps Aug 31 2025 to Sep 30",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-10-01\" to be \"2025-09-30\""
+                },
+                "after": {
+                  "name": "periodEnd clamps Aug 31 2025 to Sep 30",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "periodEnd handles Dec 31 2025 to Jan 31 2026",
+                "before": {
+                  "name": "periodEnd handles Dec 31 2025 to Jan 31 2026",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "periodEnd handles Dec 31 2025 to Jan 31 2026",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "periodEnd keeps day when within month length Feb 28 2025 to Mar 28",
+                "before": {
+                  "name": "periodEnd keeps day when within month length Feb 28 2025 to Mar 28",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "periodEnd keeps day when within month length Feb 28 2025 to Mar 28",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "periodEnd works for normal day Jan 15 2025 to Feb 15",
+                "before": {
+                  "name": "periodEnd works for normal day Jan 15 2025 to Feb 15",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "periodEnd works for normal day Jan 15 2025 to Feb 15",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "periodEnd clamps Mar 31 2025 to Apr 30",
+                "before": {
+                  "name": "periodEnd clamps Mar 31 2025 to Apr 30",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-05-01\" to be \"2025-04-30\""
+                },
+                "after": {
+                  "name": "periodEnd clamps Mar 31 2025 to Apr 30",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              }
+            ]
+          },
+          "tests_source": "import { periodEnd } from '@entry' ; import { test, expect } from '@patchwitness/harness' ; test('periodEnd clamps Jan 31 2025 to Feb 28', () => { const result = periodEnd('2025-01-31') ; expect(result).toBe('2025-02-28') }) ; test('periodEnd clamps Jan 31 2024 leap year to Feb 29', () => { const result = periodEnd('2024-01-31') ; expect(result).toBe('2024-02-29') }) ; test('periodEnd clamps Aug 31 2025 to Sep 30', () => { const result = periodEnd('2025-08-31') ; expect(result).toBe('2025-09-30') }) ; test('periodEnd handles Dec 31 2025 to Jan 31 2026', () => { const result = periodEnd('2025-12-31') ; expect(result).toBe('2026-01-31') }) ; test('periodEnd keeps day when within month length Feb 28 2025 to Mar 28', () => { const result = periodEnd('2025-02-28') ; expect(result).toBe('2025-03-28') }) ; test('periodEnd works for normal day Jan 15 2025 to Feb 15', () => { const result = periodEnd('2025-01-15') ; expect(result).toBe('2025-02-15') }) ; test('periodEnd clamps Mar 31 2025 to Apr 30', () => { const result = periodEnd('2025-03-31') ; expect(result).toBe('2025-04-30') }) ; ",
+          "rationale": [
+            "Tests verify clamping for month-end dates that overflow (Jan 31, Mar 31, Aug 31).",
+            "Leap year case ensures Feb 29 is produced from Jan 31 in a leap year.",
+            "Year rollover case checks Dec 31 -> Jan 31 next year.",
+            "Non‑overflow case (Feb 28) confirms normal advancement when day fits.",
+            "Normal mid‑month date validates unchanged day‑of‑month behavior.",
+            "Each test isolates a specific edge case from the hypotheses."
+          ],
+          "cost": 0.013714619999999999
+        }
+      ]
+    },
+    "incomplete": {
+      "session": "e90eff33-6271-4139-afde-2097f58bdfa6",
+      "cost": 0.01563092,
+      "extraction": {
+        "expected": "The billing period end date should be the same day of the next month if that day exists; otherwise the last day of that month. For a start date of January 31, 2025 (a non‑leap year), the expected end date is February 28, 2025.",
+        "actual": "The computed end date is March 3, 2025.",
+        "repro_steps": [
+          "Create a monthly billing period that starts on 2025-01-31 (UTC).",
+          "Calculate the end date using the current month‑addition logic.",
+          "Observe that the resulting end date is 2025-03-03 instead of the expected 2025-02-28."
+        ],
+        "inputs": [
+          "start_date=2025-01-31",
+          "period=monthly"
+        ],
+        "suspected_area": "Month‑addition / end‑date calculation logic that does not correctly handle month‑end overflow."
+      },
+      "hypotheses": [
+        {
+          "id": "missing-day-clamping",
+          "statement": "The periodEnd function calculates the next month's date by keeping the same day-of-month without clamping to the target month's last day. When the start day exceeds the number of days in the next month (e.g., Jan 31 -> Feb 31), the Date constructor rolls the excess days into March, producing an end date in the wrong month.",
+          "file": "src/billing.mjs",
+          "line_hint": 9,
+          "why_patch_addresses_it": "The patch adds a Math.min clamp using the target month's day count (via daysInMonth) to ensure the day does not exceed the month's length, preventing overflow into subsequent months.",
+          "edge_cases_to_test": [
+            "2025-01-31 (non-leap year February)",
+            "2024-01-31 (leap year February)",
+            "2025-03-31 (April has 30 days)",
+            "2025-05-31 (June has 30 days)",
+            "2025-08-31 (September has 30 days)",
+            "2025-10-31 (November has 30 days)",
+            "2025-12-31 (January next year)"
+          ]
+        },
+        {
+          "id": "unused-daysInMonth",
+          "statement": "The module imports daysInMonth from calendar.mjs but never calls it, leaving the periodEnd function without access to the correct month length for clamping.",
+          "file": "src/billing.mjs",
+          "line_hint": 1,
+          "why_patch_addresses_it": "The patch uses daysInMonth(year, month) in the clamping expression (except for the February special case), finally utilizing the imported utility to get the correct month length.",
+          "edge_cases_to_test": [
+            "2024-01-31 (leap year February should use 29 days)",
+            "2025-02-28 (start on last day of February non-leap)",
+            "2024-02-29 (start on last day of February leap)"
+          ]
+        },
+        {
+          "id": "feb-hardcode-leap-bug",
+          "statement": "The patch introduces a ternary that returns 28 for February (month index 1) instead of calling daysInMonth, which would correctly return 29 for leap years. This replaces the original overflow bug with a new off-by-one error for leap-year February periods.",
+          "file": "src/billing.mjs",
+          "line_hint": 8,
+          "why_patch_addresses_it": "The patch addresses the original overflow by clamping, but the February special case undermines the fix for leap years. The patch should use daysInMonth for all months without special-casing.",
+          "edge_cases_to_test": [
+            "2024-01-31 (leap year February should end 2024-02-29)",
+            "2020-01-31 (leap year)",
+            "2100-01-31 (non-leap century year)"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "stage": "extract",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "cost": 0.00023051999999999998,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "799225"
+          }
+        },
+        {
+          "stage": "hypothesize",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "cost": 0.011411,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "299",
+            "x-ratelimit-remaining-tokens": "198678"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.0039894,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "299",
+            "x-ratelimit-remaining-tokens": "197991"
+          }
+        }
+      ],
+      "rounds": [
+        {
+          "round": 0,
+          "card": {
+            "verdict": "patch_suspect",
+            "summary": {
+              "witnesses": 7,
+              "passesBoth": 5,
+              "failsAfter": 2,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "2025-01-31 -> 2025-02-28",
+                "before": {
+                  "name": "2025-01-31 -> 2025-02-28",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-03-03\" to be \"2025-02-28\""
+                },
+                "after": {
+                  "name": "2025-01-31 -> 2025-02-28",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "2024-01-31 -> 2024-02-29",
+                "before": {
+                  "name": "2024-01-31 -> 2024-02-29",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2024-03-02\" to be \"2024-02-29\""
+                },
+                "after": {
+                  "name": "2024-01-31 -> 2024-02-29",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2024-02-28\" to be \"2024-02-29\""
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "2025-03-31 -> 2025-04-30",
+                "before": {
+                  "name": "2025-03-31 -> 2025-04-30",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-05-01\" to be \"2025-04-30\""
+                },
+                "after": {
+                  "name": "2025-03-31 -> 2025-04-30",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "2025-05-31 -> 2025-06-30",
+                "before": {
+                  "name": "2025-05-31 -> 2025-06-30",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-07-01\" to be \"2025-06-30\""
+                },
+                "after": {
+                  "name": "2025-05-31 -> 2025-06-30",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "2025-08-31 -> 2025-09-30",
+                "before": {
+                  "name": "2025-08-31 -> 2025-09-30",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-10-01\" to be \"2025-09-30\""
+                },
+                "after": {
+                  "name": "2025-08-31 -> 2025-09-30",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "2025-10-31 -> 2025-11-30",
+                "before": {
+                  "name": "2025-10-31 -> 2025-11-30",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-12-01\" to be \"2025-11-30\""
+                },
+                "after": {
+                  "name": "2025-10-31 -> 2025-11-30",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "2025-12-31 -> 2026-01-31",
+                "before": {
+                  "name": "2025-12-31 -> 2026-01-31",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "2025-12-31 -> 2026-01-31",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "2025-02-28 -> 2025-03-28",
+                "before": {
+                  "name": "2025-02-28 -> 2025-03-28",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "2025-02-28 -> 2025-03-28",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "2024-02-29 -> 2024-03-29",
+                "before": {
+                  "name": "2024-02-29 -> 2024-03-29",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "2024-02-29 -> 2024-03-29",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "2025-01-30 -> 2025-02-28",
+                "before": {
+                  "name": "2025-01-30 -> 2025-02-28",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-03-02\" to be \"2025-02-28\""
+                },
+                "after": {
+                  "name": "2025-01-30 -> 2025-02-28",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "2024-01-30 -> 2024-02-29",
+                "before": {
+                  "name": "2024-01-30 -> 2024-02-29",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2024-03-01\" to be \"2024-02-29\""
+                },
+                "after": {
+                  "name": "2024-01-30 -> 2024-02-29",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2024-02-28\" to be \"2024-02-29\""
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "2025-01-28 -> 2025-02-28",
+                "before": {
+                  "name": "2025-01-28 -> 2025-02-28",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "2025-01-28 -> 2025-02-28",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "2025-01-29 -> 2025-02-28",
+                "before": {
+                  "name": "2025-01-29 -> 2025-02-28",
+                  "status": "fail",
+                  "message": "AssertionError: Expected \"2025-03-01\" to be \"2025-02-28\""
+                },
+                "after": {
+                  "name": "2025-01-29 -> 2025-02-28",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "2025-01-27 -> 2025-02-27",
+                "before": {
+                  "name": "2025-01-27 -> 2025-02-27",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "2025-01-27 -> 2025-02-27",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              }
+            ]
+          },
+          "tests_source": "import { periodEnd } from '@entry' ; import { test, expect } from '@patchwitness/harness' ; test('2025-01-31 -> 2025-02-28', () => { const result = periodEnd('2025-01-31') ; expect(result).toBe('2025-02-28') }) ; test('2024-01-31 -> 2024-02-29', () => { const result = periodEnd('2024-01-31') ; expect(result).toBe('2024-02-29') }) ; test('2025-03-31 -> 2025-04-30', () => { const result = periodEnd('2025-03-31') ; expect(result).toBe('2025-04-30') }) ; test('2025-05-31 -> 2025-06-30', () => { const result = periodEnd('2025-05-31') ; expect(result).toBe('2025-06-30') }) ; test('2025-08-31 -> 2025-09-30', () => { const result = periodEnd('2025-08-31') ; expect(result).toBe('2025-09-30') }) ; test('2025-10-31 -> 2025-11-30', () => { const result = periodEnd('2025-10-31') ; expect(result).toBe('2025-11-30') }) ; test('2025-12-31 -> 2026-01-31', () => { const result = periodEnd('2025-12-31') ; expect(result).toBe('2026-01-31') }) ; test('2025-02-28 -> 2025-03-28', () => { const result = periodEnd('2025-02-28') ; expect(result).toBe('2025-03-28') }) ; test('2024-02-29 -> 2024-03-29', () => { const result = periodEnd('2024-02-29') ; expect(result).toBe('2024-03-29') }) ; test('2025-01-30 -> 2025-02-28', () => { const result = periodEnd('2025-01-30') ; expect(result).toBe('2025-02-28') }) ; test('2024-01-30 -> 2024-02-29', () => { const result = periodEnd('2024-01-30') ; expect(result).toBe('2024-02-29') }) ; test('2025-01-28 -> 2025-02-28', () => { const result = periodEnd('2025-01-28') ; expect(result).toBe('2025-02-28') }) ; test('2025-01-29 -> 2025-02-28', () => { const result = periodEnd('2025-01-29') ; expect(result).toBe('2025-02-28') }) ; test('2025-01-27 -> 2025-02-27', () => { const result = periodEnd('2025-01-27') ; expect(result).toBe('2025-02-27') }) ",
+          "rationale": [
+            "Tests cover month-end overflow for months with 31 days followed by shorter months (Apr, Jun, Sep, Nov).",
+            "Tests cover leap-year February (2024) and non-leap February (2025) to detect hardcoded 28-day clamp.",
+            "Tests cover start dates near month end (30, 29, 28, 27) to ensure clamping works correctly.",
+            "Tests cover year rollover from December to January.",
+            "Tests cover normal month-to-month transition where day exists in next month."
+          ],
+          "cost": 0.01563092
+        }
+      ]
+    }
+  }
+}

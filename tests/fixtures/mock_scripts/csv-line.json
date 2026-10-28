@@ -1,0 +1,69 @@
+[
+  {
+    "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+    "content": {
+      "expected": "Split a valid single CSV line respecting quotes, doubled quotes and empty fields.",
+      "actual": "A quoted comma creates an extra field.",
+      "repro_steps": [
+        "Split pear,\"red, green\",plum."
+      ],
+      "inputs": [
+        "pear,\"red, green\",plum"
+      ],
+      "suspected_area": "src/csv.mjs"
+    },
+    "usage": {
+      "prompt_tokens": 200,
+      "completion_tokens": 100
+    },
+    "rateHeaders": {
+      "x-ratelimit-remaining-requests": "99",
+      "x-ratelimit-remaining-tokens": "9000",
+      "x-ratelimit-over-limit": "false"
+    }
+  },
+  {
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "content": {
+      "hypotheses": [
+        {
+          "id": "H1",
+          "statement": "Splitting at every comma ignores quoted field state.",
+          "file": "src/csv.mjs",
+          "line_hint": null,
+          "why_patch_addresses_it": "Tracking quotes and unescaping doubled quotes preserves field boundaries.",
+          "edge_cases_to_test": [
+            "pear,\"red, green\",plum"
+          ]
+        }
+      ]
+    },
+    "usage": {
+      "prompt_tokens": 200,
+      "completion_tokens": 100
+    },
+    "rateHeaders": {
+      "x-ratelimit-remaining-requests": "99",
+      "x-ratelimit-remaining-tokens": "9000",
+      "x-ratelimit-over-limit": "false"
+    }
+  },
+  {
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "content": {
+      "tests_source": "import { splitCSVLine } from '@entry';\nimport { test, expect } from '@patchwitness/harness';\n\ntest('quoted comma belongs to one field', () => {\n  expect(splitCSVLine('pear,\"red, green\",plum')).toEqual(['pear', 'red, green', 'plum']);\n});\ntest('doubled quote becomes a literal quote', () => {\n  expect(splitCSVLine('\"say \"\"hi\"\", now\",tail')).toEqual(['say \"hi\", now', 'tail']);\n});\ntest('quoted empty field and trailing empty field', () => {\n  expect(splitCSVLine('\"\",')).toEqual(['', '']);\n});\n",
+      "rationale": [
+        "Assert the behavior specified by the report at its edge cases."
+      ]
+    },
+    "usage": {
+      "prompt_tokens": 200,
+      "completion_tokens": 100
+    },
+    "rateHeaders": {
+      "x-ratelimit-remaining-requests": "99",
+      "x-ratelimit-remaining-tokens": "9000",
+      "x-ratelimit-over-limit": "false"
+    }
+  }
+]

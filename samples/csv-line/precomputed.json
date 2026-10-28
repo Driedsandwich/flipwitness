@@ -1,0 +1,423 @@
+{
+  "source": "live",
+  "cost": 0,
+  "recorded_at": "2026-10-24T03:19:05.414Z",
+  "recorded_cost_usd": 0.0301764,
+  "note": "Recorded live run (NVIDIA Nemotron via Nebius Token Factory). Viewing costs $0; the saved before/after results are shown and nothing re-runs.",
+  "patches": {
+    "good": {
+      "session": "253dd6b4-5df2-4aaa-8fd2-7a37da2838d7",
+      "cost": 0.0110216,
+      "extraction": {
+        "expected": "The line should be split into three fields: pear, red, green, plum (the comma inside the quoted field is part of the second field).",
+        "actual": "The current splitter produces four fields instead of the expected three.",
+        "repro_steps": [
+          "Provide the single line `pear,`red, green`,plum` as input to the helper.",
+          "Observe that the output contains four fields rather than three."
+        ],
+        "inputs": [
+          "`pear,`red, green`,plum`"
+        ],
+        "suspected_area": "quoted field parsing logic that fails to remove enclosing quotes and to treat doubled quotes as a single literal quote"
+      },
+      "hypotheses": [
+        {
+          "id": "H1",
+          "statement": "The original splitCSVLine function splits the line on every comma, ignoring CSV quoting rules, causing commas inside quoted fields to be treated as delimiters.",
+          "file": "src/csv.mjs",
+          "line_hint": 2,
+          "why_patch_addresses_it": "The patch introduces a state machine that tracks whether the parser is inside a quoted field, only treating commas as delimiters when not quoted.",
+          "edge_cases_to_test": [
+            "Field with internal comma: 'a,b,c'",
+            "Multiple quoted fields: 'a,b,c'",
+            "Empty quoted field: 'a,,b'"
+          ]
+        },
+        {
+          "id": "H2",
+          "statement": "The original implementation does not handle escaped quotes (doubled quotes) inside quoted fields, which would cause the parser to incorrectly end the quoted field at the first quote of the pair.",
+          "file": "src/csv.mjs",
+          "line_hint": 2,
+          "why_patch_addresses_it": "The patch checks for a double quote when inside a quoted field and treats it as a literal quote character, advancing the index by two.",
+          "edge_cases_to_test": [
+            "Doubled quotes inside field: 'He said Hello'",
+            "Doubled quotes at start/end: ''",
+            "Mixed doubled quotes and commas: 'a,b,c'"
+          ]
+        },
+        {
+          "id": "H3",
+          "statement": "The original implementation does not remove enclosing quotes from quoted fields, leaving them as part of the field value.",
+          "file": "src/csv.mjs",
+          "line_hint": 2,
+          "why_patch_addresses_it": "The patch toggles the quoted state on encountering a quote character and does not append the quote to the field buffer, effectively stripping the enclosing quotes.",
+          "edge_cases_to_test": [
+            "Quoted field without internal commas: 'hello'",
+            "Quoted field with leading/trailing spaces: ' hello '",
+            "Field that is not quoted but contains a quote: 'a,b,c' (invalid CSV but should not break)"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "stage": "extract",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "cost": 0.00014969999999999998,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "799204"
+          }
+        },
+        {
+          "stage": "hypothesize",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "cost": 0.008678,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "299",
+            "x-ratelimit-remaining-tokens": "198936"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.0021939,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "299",
+            "x-ratelimit-remaining-tokens": "198382"
+          }
+        }
+      ],
+      "rounds": [
+        {
+          "round": 0,
+          "card": {
+            "verdict": "patch_suspect",
+            "summary": {
+              "witnesses": 3,
+              "passesBoth": 0,
+              "failsAfter": 3,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "splits line with internal comma",
+                "before": {
+                  "name": "splits line with internal comma",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"pear\\\"red\",\" green\\\"\",\"plum\"] to equal [\"pear\",\"red, green\",\"plum\"]"
+                },
+                "after": {
+                  "name": "splits line with internal comma",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"pearred, green\",\"plum\"] to equal [\"pear\",\"red, green\",\"plum\"]"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "handles multiple quoted fields",
+                "before": {
+                  "name": "handles multiple quoted fields",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"\\\"a\\\"\",\"\\\"b\\\"\",\"\\\"c\\\"\"] to equal [\"a\",\"b\",\"c\"]"
+                },
+                "after": {
+                  "name": "handles multiple quoted fields",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "empty quoted field",
+                "before": {
+                  "name": "empty quoted field",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"a\",\"\\\"\\\"\",\"b\"] to equal [\"a\",\"\",\"b\"]"
+                },
+                "after": {
+                  "name": "empty quoted field",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "internal doubled quotes",
+                "before": {
+                  "name": "internal doubled quotes",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"\\\"He said \\\"\\\"Hello\\\"\\\"\\\"\"] to equal [\"He said \\\"Hello\"]"
+                },
+                "after": {
+                  "name": "internal doubled quotes",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"He said \\\"Hello\\\"\"] to equal [\"He said \\\"Hello\"]"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "quoted field with leading/trailing spaces",
+                "before": {
+                  "name": "quoted field with leading/trailing spaces",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"\\\" hello \\\"\"] to equal [\" hello \"]"
+                },
+                "after": {
+                  "name": "quoted field with leading/trailing spaces",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "non-quoted field containing quote",
+                "before": {
+                  "name": "non-quoted field containing quote",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "non-quoted field containing quote",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"a,b\"] to equal [\"a\\\"\",\"b\"]"
+                },
+                "classification": "fails_after"
+              }
+            ]
+          },
+          "tests_source": "import { splitCSVLine } from '@entry' ; import { test, expect } from '@patchwitness/harness' ; const dq = String.fromCharCode(34) ; test('splits line with internal comma' , () => { const line = 'pear' + dq + 'red, green' + dq + ',plum' ; const result = splitCSVLine(line) ; expect(result).toEqual(['pear','red, green','plum']) ; }) ; test('handles multiple quoted fields' , () => { const line = dq + 'a' + dq + ',' + dq + 'b' + dq + ',' + dq + 'c' + dq ; expect(splitCSVLine(line)).toEqual(['a','b','c']) ; }) ; test('empty quoted field' , () => { const line = 'a' + ',' + dq + dq + ',' + 'b' ; expect(splitCSVLine(line)).toEqual(['a','','b']) ; }) ; test('internal doubled quotes' , () => { const inner = 'He said ' + dq + dq + 'Hello' + dq + dq ; const line = dq + inner + dq ; const expected = 'He said ' + dq + 'Hello' ; expect(splitCSVLine(line)).toEqual([expected]) ; }) ; test('quoted field with leading/trailing spaces' , () => { const line = dq + ' hello ' + dq ; expect(splitCSVLine(line)).toEqual([' hello ']) ; }) ; test('non-quoted field containing quote' , () => { const line = 'a' + dq + ',b' ; expect(splitCSVLine(line)).toEqual(['a' + dq , 'b']) ; }) ; ",
+          "rationale": [
+            "]}]}"
+          ],
+          "cost": 0.0110216
+        }
+      ]
+    },
+    "incomplete": {
+      "session": "7f389d72-6719-4ee3-a684-a6abdcac2eeb",
+      "cost": 0.0191548,
+      "extraction": {
+        "expected": "The line should be split into three fields: pear, red, green, plum",
+        "actual": "The current splitter produces four fields",
+        "repro_steps": [
+          "Parse the line `pear,`red, green`,plum` using the current CSV splitter helper"
+        ],
+        "inputs": [
+          "pear,`red, green`,plum"
+        ],
+        "suspected_area": "CSV splitter helper"
+      },
+      "hypotheses": [
+        {
+          "id": "H1",
+          "statement": "The splitCSVLine function uses a naive split(',') that treats every comma as a delimiter, ignoring CSV quoting rules where commas inside double-quoted fields should not split.",
+          "file": "src/csv.mjs",
+          "line_hint": 2,
+          "why_patch_addresses_it": "The patch replaces the simple split with a state machine that tracks whether the parser is inside a quoted field (toggling on double quotes) and only splits on commas when not quoted, thus preserving commas inside quoted fields.",
+          "edge_cases_to_test": [
+            "pear,`red, green`,plum (quoted field with comma)",
+            "`a,b`,c (quoted field at start)",
+            "a,`b,c` (quoted field at end)",
+            "a,,c (empty field)",
+            "`a,`b`,c` (escaped quotes not handled by patch)",
+            "a,`b,c` (newline inside quoted field)"
+          ]
+        },
+        {
+          "id": "H2",
+          "statement": "The original implementation does not maintain any parsing state, causing it to incorrectly split fields that contain commas within double quotes, resulting in an extra field.",
+          "file": "src/csv.mjs",
+          "line_hint": 2,
+          "why_patch_addresses_it": "The patch introduces a 'quoted' boolean flag that toggles on each double quote character, and only pushes a field when a comma is encountered while quoted is false, thereby correctly grouping quoted content.",
+          "edge_cases_to_test": [
+            "pear,`red, green`,plum",
+            "`field with, comma`,another",
+            "first,`second, with, commas`,third",
+            "`quoted, field`",
+            "unquoted,field"
+          ]
+        },
+        {
+          "id": "H3",
+          "statement": "The function lacks support for CSV's quoted-field convention, so any input with a quoted field containing a comma will be split into more fields than expected.",
+          "file": "src/csv.mjs",
+          "line_hint": 2,
+          "why_patch_addresses_it": "The new implementation iterates character by character, building fields and only delimiting on commas outside quotes, which aligns with basic CSV parsing (though it does not handle escaped quotes or newlines).",
+          "edge_cases_to_test": [
+            "pear,`red, green`,plum",
+            "`a,b`,c,d",
+            "a,`b,c`,d",
+            "a,b,c (no quotes)",
+            "`a,`b`,c` (double quotes inside quoted field)",
+            "`multi-line, field` (newline inside quotes)"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "stage": "extract",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "cost": 0.00017873999999999999,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "799204"
+          }
+        },
+        {
+          "stage": "hypothesize",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "cost": 0.009292,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "299",
+            "x-ratelimit-remaining-tokens": "199032"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.009684060000000001,
+          "source": "live",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "299",
+            "x-ratelimit-remaining-tokens": "198360"
+          }
+        }
+      ],
+      "rounds": [
+        {
+          "round": 0,
+          "card": {
+            "verdict": "patch_suspect",
+            "summary": {
+              "witnesses": 2,
+              "passesBoth": 2,
+              "failsAfter": 3,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "splitCSVLine basic no quotes",
+                "before": {
+                  "name": "splitCSVLine basic no quotes",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "splitCSVLine basic no quotes",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "splitCSVLine quoted field with comma middle",
+                "before": {
+                  "name": "splitCSVLine quoted field with comma middle",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"pear\\\"red\",\" green\\\"\",\"plum\"] to equal [\"pear\",\"red, green\",\"plum\"]"
+                },
+                "after": {
+                  "name": "splitCSVLine quoted field with comma middle",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"pearred, green\",\"plum\"] to equal [\"pear\",\"red, green\",\"plum\"]"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "splitCSVLine quoted field at start",
+                "before": {
+                  "name": "splitCSVLine quoted field at start",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"\\\"a\",\"b\\\"\",\"c\"] to equal [\"a\",\"b\",\"c\"]"
+                },
+                "after": {
+                  "name": "splitCSVLine quoted field at start",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"a,b\",\"c\"] to equal [\"a\",\"b\",\"c\"]"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "splitCSVLine quoted field at end",
+                "before": {
+                  "name": "splitCSVLine quoted field at end",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"a\",\"\\\"b\",\"c\\\"\"] to equal [\"a\",\"b,c\"]"
+                },
+                "after": {
+                  "name": "splitCSVLine quoted field at end",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "splitCSVLine empty field",
+                "before": {
+                  "name": "splitCSVLine empty field",
+                  "status": "pass",
+                  "message": ""
+                },
+                "after": {
+                  "name": "splitCSVLine empty field",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "passes_both"
+              },
+              {
+                "name": "splitCSVLine escaped quotes pattern",
+                "before": {
+                  "name": "splitCSVLine escaped quotes pattern",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"\\\"a\",\"\\\"b\\\"\",\"\\\"c\\\"\"] to equal [\"a\",\"b\",\"c\"]"
+                },
+                "after": {
+                  "name": "splitCSVLine escaped quotes pattern",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"a,b,c\"] to equal [\"a\",\"b\",\"c\"]"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "splitCSVLine newline inside quoted field",
+                "before": {
+                  "name": "splitCSVLine newline inside quoted field",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"a\",\"\\\"b\\nc\\\"\"] to equal [\"a\",\"b\\nc\"]"
+                },
+                "after": {
+                  "name": "splitCSVLine newline inside quoted field",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              }
+            ]
+          },
+          "tests_source": "import { splitCSVLine } from '@entry' ; import { test, expect } from '@patchwitness/harness' ; const DQ = String.fromCharCode(34) ; const NL = String.fromCharCode(10) ; test('splitCSVLine basic no quotes', () => { expect(splitCSVLine('a,b,c')).toEqual(['a','b','c']) ; }) ; test('splitCSVLine quoted field with comma middle', () => { expect(splitCSVLine('pear' + DQ + 'red, green' + DQ + ',plum')).toEqual(['pear','red, green','plum']) ; }) ; test('splitCSVLine quoted field at start', () => { expect(splitCSVLine(DQ + 'a,b' + DQ + ',c')).toEqual(['a','b','c']) ; }) ; test('splitCSVLine quoted field at end', () => { expect(splitCSVLine('a,' + DQ + 'b,c' + DQ)).toEqual(['a','b,c']) ; }) ; test('splitCSVLine empty field', () => { expect(splitCSVLine('a,,c')).toEqual(['a','','c']) ; }) ; test('splitCSVLine escaped quotes pattern', () => { expect(splitCSVLine(DQ + 'a,' + DQ + 'b' + DQ + ',' + DQ + 'c' + DQ)).toEqual(['a','b','c']) ; }) ; test('splitCSVLine newline inside quoted field', () => { expect(splitCSVLine('a,' + DQ + 'b' + NL + 'c' + DQ)).toEqual(['a','b' + NL + 'c']) ; }) ",
+          "rationale": [
+            "Verify basic splitting when no quotes are present.",
+            "Ensure a quoted field containing a comma is treated as a single field.",
+            "Check that quoted fields at the start or end of the line are parsed correctly.",
+            "Confirm that empty fields between commas are preserved.",
+            "Validate handling of consecutive quotes (toggle behavior) as described in the edge case.",
+            "Check that newline characters inside quoted fields are kept as part of the field."
+          ],
+          "cost": 0.0191548
+        }
+      ]
+    }
+  }
+}

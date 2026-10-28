@@ -1,0 +1,90 @@
+[
+  {
+    "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+    "content": {
+      "expected": "Reject names containing only whitespace and all non-string values.",
+      "actual": "Two spaces are accepted as a valid name.",
+      "repro_steps": [
+        "Enter two spaces.",
+        "Validate the name."
+      ],
+      "inputs": [
+        "  ",
+        "\\t\\n"
+      ],
+      "suspected_area": "src/name.mjs"
+    },
+    "usage": {
+      "prompt_tokens": 200,
+      "completion_tokens": 100
+    },
+    "rateHeaders": {
+      "x-ratelimit-remaining-requests": "99",
+      "x-ratelimit-remaining-tokens": "9000",
+      "x-ratelimit-over-limit": "false"
+    }
+  },
+  {
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "content": {
+      "hypotheses": [
+        {
+          "id": "H1",
+          "statement": "Length is checked without trimming whitespace.",
+          "file": "src/name.mjs",
+          "line_hint": null,
+          "why_patch_addresses_it": "Trimming before the length check rejects whitespace-only strings.",
+          "edge_cases_to_test": [
+            "  ",
+            "\\t\\n"
+          ]
+        }
+      ]
+    },
+    "usage": {
+      "prompt_tokens": 200,
+      "completion_tokens": 100
+    },
+    "rateHeaders": {
+      "x-ratelimit-remaining-requests": "99",
+      "x-ratelimit-remaining-tokens": "9000",
+      "x-ratelimit-over-limit": "false"
+    }
+  },
+  {
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "content": {
+      "tests_source": "import { test, expect } from '@patchwitness/harness';\ntest('unsafe', () => { fetch('https://example.invalid'); });",
+      "rationale": [
+        "Deliberate static-gate violation fixture; must never execute."
+      ]
+    },
+    "usage": {
+      "prompt_tokens": 200,
+      "completion_tokens": 100
+    },
+    "rateHeaders": {
+      "x-ratelimit-remaining-requests": "99",
+      "x-ratelimit-remaining-tokens": "9000",
+      "x-ratelimit-over-limit": "false"
+    }
+  },
+  {
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "content": {
+      "tests_source": "import { isValidName } from '@entry';\nimport { test, expect } from '@patchwitness/harness';\n\ntest('spaces alone are rejected', () => { expect(isValidName('  ')).toBe(false); });\ntest('tabs and newlines alone are rejected', () => { expect(isValidName('\\t\\n')).toBe(false); });\ntest('surrounding whitespace preserves a name', () => { expect(isValidName('  Mira\\t')).toBe(true); });\n",
+      "rationale": [
+        "Assert the behavior specified by the report at its edge cases."
+      ]
+    },
+    "usage": {
+      "prompt_tokens": 200,
+      "completion_tokens": 100
+    },
+    "rateHeaders": {
+      "x-ratelimit-remaining-requests": "99",
+      "x-ratelimit-remaining-tokens": "9000",
+      "x-ratelimit-over-limit": "false"
+    }
+  }
+]

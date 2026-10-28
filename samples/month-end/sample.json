@@ -1,0 +1,5 @@
+{
+  "title": "Month-end billing",
+  "entry": "src/billing.mjs",
+  "files": ["src/billing.mjs", "src/calendar.mjs"]
+}

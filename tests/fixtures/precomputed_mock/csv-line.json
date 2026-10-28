@@ -1,0 +1,263 @@
+{
+  "source": "mock",
+  "cost": 0,
+  "note": "Scripted fixtures, not real model output. Costs inside patches are simulated USD.",
+  "patches": {
+    "good": {
+      "session": "e277bd00-b8ec-408c-ab26-35dd40cc5e6e",
+      "cost": 0.000686,
+      "extraction": {
+        "expected": "Split a valid single CSV line respecting quotes, doubled quotes and empty fields.",
+        "actual": "A quoted comma creates an extra field.",
+        "repro_steps": [
+          "Split pear,\"red, green\",plum."
+        ],
+        "inputs": [
+          "pear,\"red, green\",plum"
+        ],
+        "suspected_area": "src/csv.mjs"
+      },
+      "hypotheses": [
+        {
+          "id": "H1",
+          "statement": "Splitting at every comma ignores quoted field state.",
+          "file": "src/csv.mjs",
+          "line_hint": null,
+          "why_patch_addresses_it": "Tracking quotes and unescaping doubled quotes preserves field boundaries.",
+          "edge_cases_to_test": [
+            "pear,\"red, green\",plum"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "stage": "extract",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "cost": 0.000036,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "hypothesize",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "cost": 0.0005,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.00015,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        }
+      ],
+      "rounds": [
+        {
+          "round": 0,
+          "card": {
+            "verdict": "supported",
+            "summary": {
+              "witnesses": 3,
+              "passesBoth": 0,
+              "failsAfter": 0,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "quoted comma belongs to one field",
+                "before": {
+                  "name": "quoted comma belongs to one field",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"pear\",\"\\\"red\",\" green\\\"\",\"plum\"] to equal [\"pear\",\"red, green\",\"plum\"]"
+                },
+                "after": {
+                  "name": "quoted comma belongs to one field",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "doubled quote becomes a literal quote",
+                "before": {
+                  "name": "doubled quote becomes a literal quote",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"\\\"say \\\"\\\"hi\\\"\\\"\",\" now\\\"\",\"tail\"] to equal [\"say \\\"hi\\\", now\",\"tail\"]"
+                },
+                "after": {
+                  "name": "doubled quote becomes a literal quote",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "quoted empty field and trailing empty field",
+                "before": {
+                  "name": "quoted empty field and trailing empty field",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"\\\"\\\"\",\"\"] to equal [\"\",\"\"]"
+                },
+                "after": {
+                  "name": "quoted empty field and trailing empty field",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              }
+            ]
+          },
+          "tests_source": "import { splitCSVLine } from '@entry';\nimport { test, expect } from '@patchwitness/harness';\n\ntest('quoted comma belongs to one field', () => {\n  expect(splitCSVLine('pear,\"red, green\",plum')).toEqual(['pear', 'red, green', 'plum']);\n});\ntest('doubled quote becomes a literal quote', () => {\n  expect(splitCSVLine('\"say \"\"hi\"\", now\",tail')).toEqual(['say \"hi\", now', 'tail']);\n});\ntest('quoted empty field and trailing empty field', () => {\n  expect(splitCSVLine('\"\",')).toEqual(['', '']);\n});\n",
+          "rationale": [
+            "Assert the behavior specified by the report at its edge cases."
+          ],
+          "cost": 0.000686
+        }
+      ]
+    },
+    "incomplete": {
+      "session": "cfd5002d-fc15-484e-a8e3-1ed4e5e2d0cf",
+      "cost": 0.000686,
+      "extraction": {
+        "expected": "Split a valid single CSV line respecting quotes, doubled quotes and empty fields.",
+        "actual": "A quoted comma creates an extra field.",
+        "repro_steps": [
+          "Split pear,\"red, green\",plum."
+        ],
+        "inputs": [
+          "pear,\"red, green\",plum"
+        ],
+        "suspected_area": "src/csv.mjs"
+      },
+      "hypotheses": [
+        {
+          "id": "H1",
+          "statement": "Splitting at every comma ignores quoted field state.",
+          "file": "src/csv.mjs",
+          "line_hint": null,
+          "why_patch_addresses_it": "Tracking quotes and unescaping doubled quotes preserves field boundaries.",
+          "edge_cases_to_test": [
+            "pear,\"red, green\",plum"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "stage": "extract",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "cost": 0.000036,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "hypothesize",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "cost": 0.0005,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        },
+        {
+          "stage": "tests",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "cost": 0.00015,
+          "source": "mock",
+          "estimated": false,
+          "rateHeaders": {
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-remaining-tokens": "9000",
+            "x-ratelimit-over-limit": "false"
+          }
+        }
+      ],
+      "rounds": [
+        {
+          "round": 0,
+          "card": {
+            "verdict": "patch_suspect",
+            "summary": {
+              "witnesses": 2,
+              "passesBoth": 0,
+              "failsAfter": 1,
+              "errors": 0
+            },
+            "tests": [
+              {
+                "name": "quoted comma belongs to one field",
+                "before": {
+                  "name": "quoted comma belongs to one field",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"pear\",\"\\\"red\",\" green\\\"\",\"plum\"] to equal [\"pear\",\"red, green\",\"plum\"]"
+                },
+                "after": {
+                  "name": "quoted comma belongs to one field",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              },
+              {
+                "name": "doubled quote becomes a literal quote",
+                "before": {
+                  "name": "doubled quote becomes a literal quote",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"\\\"say \\\"\\\"hi\\\"\\\"\",\" now\\\"\",\"tail\"] to equal [\"say \\\"hi\\\", now\",\"tail\"]"
+                },
+                "after": {
+                  "name": "doubled quote becomes a literal quote",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"say hi, now\",\"tail\"] to equal [\"say \\\"hi\\\", now\",\"tail\"]"
+                },
+                "classification": "fails_after"
+              },
+              {
+                "name": "quoted empty field and trailing empty field",
+                "before": {
+                  "name": "quoted empty field and trailing empty field",
+                  "status": "fail",
+                  "message": "AssertionError: Expected [\"\\\"\\\"\",\"\"] to equal [\"\",\"\"]"
+                },
+                "after": {
+                  "name": "quoted empty field and trailing empty field",
+                  "status": "pass",
+                  "message": ""
+                },
+                "classification": "witness"
+              }
+            ]
+          },
+          "tests_source": "import { splitCSVLine } from '@entry';\nimport { test, expect } from '@patchwitness/harness';\n\ntest('quoted comma belongs to one field', () => {\n  expect(splitCSVLine('pear,\"red, green\",plum')).toEqual(['pear', 'red, green', 'plum']);\n});\ntest('doubled quote becomes a literal quote', () => {\n  expect(splitCSVLine('\"say \"\"hi\"\", now\",tail')).toEqual(['say \"hi\", now', 'tail']);\n});\ntest('quoted empty field and trailing empty field', () => {\n  expect(splitCSVLine('\"\",')).toEqual(['', '']);\n});\n",
+          "rationale": [
+            "Assert the behavior specified by the report at its edge cases."
+          ],
+          "cost": 0.000686
+        }
+      ]
+    }
+  }
+}

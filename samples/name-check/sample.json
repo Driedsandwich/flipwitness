@@ -1,0 +1,5 @@
+{
+  "title": "Whitespace name validation",
+  "entry": "src/name.mjs",
+  "files": ["src/name.mjs"]
+}

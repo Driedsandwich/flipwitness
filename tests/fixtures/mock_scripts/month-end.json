@@ -1,0 +1,90 @@
+[
+  {
+    "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+    "content": {
+      "expected": "Clamp the next monthly date to the last valid UTC calendar day.",
+      "actual": "January 31 produces March 3 instead of February 28.",
+      "repro_steps": [
+        "Start a period on January 31, 2025.",
+        "Observe the returned period end."
+      ],
+      "inputs": [
+        "2025-01-31",
+        "2024-01-31"
+      ],
+      "suspected_area": "src/billing.mjs"
+    },
+    "usage": {
+      "prompt_tokens": 200,
+      "completion_tokens": 100
+    },
+    "rateHeaders": {
+      "x-ratelimit-remaining-requests": "99",
+      "x-ratelimit-remaining-tokens": "9000",
+      "x-ratelimit-over-limit": "false"
+    }
+  },
+  {
+    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+    "content": {
+      "hypotheses": [
+        {
+          "id": "H1",
+          "statement": "Date.UTC normalizes an overflowing day into the following month.",
+          "file": "src/billing.mjs",
+          "line_hint": null,
+          "why_patch_addresses_it": "Clamping the day before date construction avoids overflow.",
+          "edge_cases_to_test": [
+            "2025-01-31",
+            "2024-01-31"
+          ]
+        }
+      ]
+    },
+    "usage": {
+      "prompt_tokens": 200,
+      "completion_tokens": 100
+    },
+    "rateHeaders": {
+      "x-ratelimit-remaining-requests": "99",
+      "x-ratelimit-remaining-tokens": "9000",
+      "x-ratelimit-over-limit": "false"
+    }
+  },
+  {
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "content": {
+      "tests_source": "import { periodEnd } from '@entry';\nimport { test, expect } from '@patchwitness/harness';\n\ntest('ordinary monthly period', () => {\n  expect(periodEnd('2025-01-15')).toBe('2025-02-15');\n});\ntest('year rollover', () => {\n  expect(periodEnd('2025-12-10')).toBe('2026-01-10');\n});\n",
+      "rationale": [
+        "Check ordinary dates; deliberately no regression witness in this scripted first round."
+      ]
+    },
+    "usage": {
+      "prompt_tokens": 200,
+      "completion_tokens": 100
+    },
+    "rateHeaders": {
+      "x-ratelimit-remaining-requests": "99",
+      "x-ratelimit-remaining-tokens": "9000",
+      "x-ratelimit-over-limit": "false"
+    }
+  },
+  {
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "content": {
+      "tests_source": "import { periodEnd } from '@entry';\nimport { test, expect } from '@patchwitness/harness';\n\ntest('January 31 clamps to February 28', () => {\n  expect(periodEnd('2025-01-31')).toBe('2025-02-28');\n});\ntest('leap-year February keeps February 29', () => {\n  expect(periodEnd('2024-01-31')).toBe('2024-02-29');\n});\ntest('March 31 clamps to April 30', () => {\n  expect(periodEnd('2025-03-31')).toBe('2025-04-30');\n});\n",
+      "rationale": [
+        "Assert the behavior specified by the report at its edge cases."
+      ]
+    },
+    "usage": {
+      "prompt_tokens": 200,
+      "completion_tokens": 100
+    },
+    "rateHeaders": {
+      "x-ratelimit-remaining-requests": "99",
+      "x-ratelimit-remaining-tokens": "9000",
+      "x-ratelimit-over-limit": "false"
+    }
+  }
+]

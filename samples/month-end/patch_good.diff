@@ -1,0 +1,25 @@
+--- a/src/billing.mjs
++++ b/src/billing.mjs
+@@ -1,11 +1,11 @@
+-import { daysInMonth } from './calendar.mjs';
+-
+-// Return the same day next month, clamped to that month's last day, in UTC.
+-export function periodEnd(start) {
+-  const date = new Date(start + 'T00:00:00Z');
+-  const year = date.getUTCFullYear();
+-  const month = date.getUTCMonth() + 1;
+-  const day = date.getUTCDate();
+-  const end = new Date(Date.UTC(year, month, day));
+-  return end.toISOString().slice(0, 10);
+-}
++import { daysInMonth } from './calendar.mjs';
++
++// Return the same day next month, clamped to that month's last day, in UTC.
++export function periodEnd(start) {
++  const date = new Date(start + 'T00:00:00Z');
++  const year = date.getUTCFullYear();
++  const month = date.getUTCMonth() + 1;
++  const day = Math.min(date.getUTCDate(), daysInMonth(year, month));
++  const end = new Date(Date.UTC(year, month, day));
++  return end.toISOString().slice(0, 10);
++}
