@@ -5,7 +5,7 @@ tests, your browser runs them on the original and the patched code, and only a t
 fails before and passes after counts as a **witness**. With no witness, the model rewrites
 the tests from the before/after results, up to three times.
 
-- **Live demo:** _added at deployment_
+- **Live demo:** https://flipwitness.vercel.app/
 - **Video (under 3 minutes):** _added at upload_
 - **Track:** Coding and Agentic Engineering · Nebius x NVIDIA Global AI Hackathon
 
