@@ -6,7 +6,7 @@ fails before and passes after counts as a **witness**. With no witness, the mode
 the tests from the before/after results, up to three times.
 
 - **Live demo:** https://flipwitness.vercel.app/
-- **Video (under 3 minutes):** _added at upload_
+- **Video (under 3 minutes):** https://youtu.be/cK15NO4lRBU
 - **Track:** Coding and Agentic Engineering · Nebius x NVIDIA Global AI Hackathon
 
 The default sample view shows recorded live runs (NVIDIA Nemotron 3 via Nebius Token
