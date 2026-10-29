@@ -1,4 +1,4 @@
-# PatchWitness deterministic core
+# FlipWitness deterministic core
 
 audience: maintainers
 

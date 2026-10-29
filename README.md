@@ -1,6 +1,6 @@
-# PatchWitness
+# FlipWitness
 
-PatchWitness turns a bug report and a patch into evidence. NVIDIA Nemotron writes the
+FlipWitness turns a bug report and a patch into evidence. NVIDIA Nemotron writes the
 tests, your browser runs them on the original and the patched code, and only a test that
 fails before and passes after counts as a **witness**. With no witness, the model rewrites
 the tests from the before/after results, up to three times.
@@ -59,7 +59,7 @@ for invalid arguments, missing files or a patch that does not apply.
 ## Deploy on Vercel
 
 The repository deploys as-is on Vercel (no build step). Static files are served from the
-project root (`/` rewrites to `/web/index.html`), and `api/pw.mjs` is the Vercel Function
+project root (`/` redirects to `/web/index.html`), and `api/pw.mjs` is the Vercel Function
 for `POST /api/pw` (a `POST(request)` export, `maxDuration` 120 s in `vercel.json`).
 
 Live calls need a shared, durable spending ledger because function instances share no files:

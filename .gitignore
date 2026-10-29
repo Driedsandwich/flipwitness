@@ -6,3 +6,5 @@ node_modules/
 .DS_Store
 *ledger*.jsonl
 *.lock
+.vercel
+.env*

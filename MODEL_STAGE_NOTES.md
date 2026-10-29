@@ -1,4 +1,4 @@
-# PatchWitness model stage — Order 04
+# FlipWitness model stage — Order 04
 
 audience: maintainers
 

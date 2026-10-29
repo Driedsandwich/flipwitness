@@ -3,7 +3,7 @@
   "functions": {
     "api/pw.mjs": { "maxDuration": 120 }
   },
-  "rewrites": [
-    { "source": "/", "destination": "/web/index.html" }
+  "redirects": [
+    { "source": "/", "destination": "/web/index.html", "permanent": false }
   ]
 }

@@ -43,6 +43,6 @@ export function createLocalServer({ handleAPI = createRuntime() } = {}) {
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const server = createLocalServer();
-  server.listen(4173, '127.0.0.1', () => console.log('PatchWitness: http://127.0.0.1:4173'));
+  server.listen(4173, '127.0.0.1', () => console.log('FlipWitness: http://127.0.0.1:4173'));
   server.on('error', () => { console.error('Local server could not start'); process.exitCode = 1; });
 }
